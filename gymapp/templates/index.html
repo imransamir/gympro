@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GymPro — Trainer Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --yellow:      #FFD600;
+    --yellow-dark: #C9A800;
+    --yellow-bg:   rgba(255,214,0,.15);
+    --yellow-border: rgba(255,214,0,.5);
+    --yellow-light: #FFF9E6;
+    --blue:        #1E3A8A;
+    --blue-dark:   #0F2744;
+    --blue-mid:    #2563EB;
+    --blue-light:  #DBEAFE;
+    --white:       #FFFFFF;
+    --off-white:   #FFFBF0;
+    --text:        #1F2937;
+    --muted:       #6B7280;
+    --border:      #FED7AA;
+    --card:        #FFFFFF;
+    --panel:       #FEF3C7;
+    --mono:        'Space Mono', monospace;
+    --display:     'Bebas Neue', sans-serif;
+    --body:        'DM Sans', sans-serif;
+    --topbar-h:    130px;
+    --sidebar-w:   0px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: linear-gradient(135deg, var(--white) 0%, var(--yellow-light) 100%);
+    color: var(--text);
+    font-family: var(--body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── TOPBAR (logo bar) ── */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: auto;
+    background: linear-gradient(90deg, var(--yellow) 0%, #FFE66D 100%);
+    border-bottom: 3px solid var(--blue-dark);
+    display: flex; flex-direction: column;
+    z-index: 200;
+    box-shadow: 0 2px 12px rgba(30,58,138,.25);
+  }
+  
+  .topbar-header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 0 28px;
+    height: 64px;
+  }
+  
+  .topbar-logo {
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .topbar-logo .gym-title {
+    font-family: var(--display);
+    font-size: 34px;
+    letter-spacing: 3px;
+    color: var(--blue-dark);
+    line-height: 1;
+  }
+  .topbar-logo .gym-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(30,58,138,.6);
+  }
+  
+  .topbar-nav {
+    display: flex; align-items: center; gap: 0;
+    flex: 1;
+    padding-left: 20px;
+  }
+  
+  .topbar-nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--blue-dark);
+    border-radius: 4px;
+    transition: all .2s;
+    position: relative;
+  }
+  
+  .topbar-nav-item:hover {
+    background: rgba(30,58,138, .1);
+    transform: translateY(-2px);
+  }
+  
+  .topbar-nav-item.active {
+    background: rgba(30,58,138, .15);
+    color: var(--blue-dark);
+    font-weight: 600;
+  }
+  
+  .topbar-nav-item.active::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--blue-dark);
+    border-radius: 3px 3px 0 0;
+  }
+  
+  .topbar-status {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--blue-dark);
+    text-transform: uppercase;
+  }
+  .status-dot {
+    display: inline-block; width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--blue-mid);
+    box-shadow: 0 0 8px var(--blue-mid);
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 8px var(--blue-mid); }
+    50% { box-shadow: 0 0 16px var(--blue-mid); }
+  }
+  
+  .topbar-stats {
+    display: flex; align-items: center; gap: 20px;
+    padding: 12px 28px;
+    background: rgba(255,255,255, .5);
+    border-top: 1px solid rgba(30,58,138, .2);
+    flex-wrap: wrap;
+  }
+  
+  .stat-mini {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px;
+    background: var(--white);
+    border-radius: 4px;
+    border: 1px solid var(--yellow);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  
+  .stat-mini:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(255,214,0, .3);
+    background: rgba(255,214,0, .05);
+  }
+  
+  .stat-mini-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  
+  .stat-mini-val {
+    font-family: var(--display);
+    font-size: 20px;
+    color: var(--blue-dark);
+    font-weight: 600;
+  }
+
+  /* ── SIDEBAR (hidden) ── */
+  .sidebar {
+    display: none;
+  }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: var(--sidebar-w);
+    margin-top: var(--topbar-h);
+    padding: 32px 36px;
+    min-height: calc(100vh - var(--topbar-h));
+  }
+  .page { display: none; animation: fadeIn .25s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--yellow);
+  }
+  .page-title {
+    font-family: var(--display);
+    font-size: 48px;
+    letter-spacing: 2px;
+    color: var(--blue-dark);
+    line-height: 1;
+  }
+  .page-title span { color: var(--yellow-dark); }
+  .page-sub {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+    letter-spacing: 1px;
+    margin-top: 6px;
+  }
+  .scrum-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 12px;
+    border: 1px solid var(--yellow);
+    color: var(--blue-dark);
+    letter-spacing: 1px;
+    background: var(--yellow-light);
+  }
+
+  /* ── STAT CARDS ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--white);
+    border: 1px solid var(--yellow);
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(255,214,0,.15);
+  }
+  .stat-card::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .stat-card.yellow::after { background: var(--yellow); }
+  .stat-card.blue::after   { background: var(--blue-mid); }
+  .stat-card.yellow2::after { background: var(--yellow-dark); }
+  .stat-card.blue2::after  { background: var(--blue-dark); }
+  .stat-label { font-size: 10px; font-family: var(--mono); color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .stat-val { font-family: var(--display); font-size: 44px; letter-spacing: 1px; line-height: 1.1; margin: 4px 0 2px; }
+  .stat-card.yellow  .stat-val  { color: var(--yellow-dark); }
+  .stat-card.blue    .stat-val  { color: var(--blue-mid); }
+  .stat-card.yellow2 .stat-val  { color: var(--yellow-dark); }
+  .stat-card.blue2   .stat-val  { color: var(--blue-dark); }
+  .stat-note { font-size: 11px; color: var(--muted); }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    background: var(--white);
+    border: 1px solid var(--yellow);
+    overflow: hidden;
+    border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(255,214,0,.15);
+  }
+  .table-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--yellow);
+    background: var(--yellow-light);
+  }
+  .table-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--blue-dark);
+    font-weight: 700;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--white);
+    text-transform: uppercase;
+    padding: 11px 16px;
+    text-align: left;
+    background: linear-gradient(90deg, var(--blue-dark) 0%, var(--blue) 100%);
+  }
+  td { padding: 11px 16px; font-size: 13px; border-bottom: 1px solid var(--yellow); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--yellow-light); }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    text-transform: uppercase;
+    border-radius: 2px;
+  }
+  .badge-green  { background: var(--yellow-bg); color: var(--yellow-dark); border: 1px solid var(--yellow); }
+  .badge-orange { background: var(--blue-light); color: var(--blue-mid); border: 1px solid var(--blue-mid); }
+  .badge-blue   { background: var(--blue-light); color: var(--blue-mid); border: 1px solid var(--blue-mid); }
+  .badge-red    { background: rgba(211,47,47,.08); color: #C62828; border: 1px solid rgba(211,47,47,.25); }
+  .badge-muted  { background: var(--yellow-light); color: var(--muted); border: 1px solid var(--yellow); }
+
+  /* ── FORMS ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 10px; font-family: var(--mono); color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  input, select, textarea {
+    background: var(--white);
+    border: 1px solid var(--yellow);
+    color: var(--text);
+    padding: 10px 14px;
+    font-family: var(--body);
+    font-size: 13px;
+    outline: none;
+    transition: border-color .15s;
+    width: 100%;
+    border-radius: 2px;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--blue-dark);
+    box-shadow: 0 0 0 2px rgba(30,58,138,.15);
+  }
+  select option { background: var(--white); color: var(--text); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid;
+    transition: all .15s;
+    background: none;
+    border-radius: 2px;
+  }
+  .btn-green  { border-color: var(--yellow); color: var(--yellow-dark); background: var(--yellow-bg); }
+  .btn-green:hover  { background: var(--yellow); color: var(--white); border-color: var(--yellow-dark); }
+  .btn-orange { border-color: var(--blue-mid); color: var(--blue-mid); background: var(--blue-light); }
+  .btn-orange:hover { background: var(--blue-mid); color: var(--white); }
+  .btn-blue   { border-color: var(--blue-dark); color: var(--blue-dark); background: linear-gradient(135deg, rgba(30,58,138,.08) 0%, rgba(37,99,235,.08) 100%); }
+  .btn-blue:hover   { background: var(--blue-dark); color: var(--white); }
+  .btn-red    { border-color: #C62828; color: #C62828; }
+  .btn-red:hover    { background: #C62828; color: #fff; }
+  .btn-muted  { border-color: var(--yellow); color: var(--blue-dark); background: var(--yellow-light); }
+  .btn-muted:hover  { border-color: var(--blue-dark); color: var(--white); background: var(--blue-dark); }
+
+  /* ── PANEL / SECTION ── */
+  .panel {
+    background: var(--white);
+    border: 1px solid var(--yellow);
+    padding: 24px;
+    margin-bottom: 20px;
+    border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(255,214,0,.15);
+  }
+  .panel-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--blue-dark);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--blue);
+    font-weight: 700;
+  }
+  .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  /* ── TRAINER CARD ── */
+  .trainer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .trainer-card {
+    background: var(--white);
+    border: 1px solid var(--yellow);
+    border-top: 4px solid var(--blue-dark);
+    padding: 20px;
+    position: relative;
+    transition: box-shadow .2s, border-color .2s;
+    border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(255,214,0,.15);
+  }
+  .trainer-card:hover {
+    box-shadow: 0 4px 16px rgba(30,58,138,.2);
+    border-color: var(--yellow);
+  }
+  .trainer-card-id { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-bottom: 8px; }
+  .trainer-card-name { font-family: var(--display); font-size: 22px; letter-spacing: 1px; margin-bottom: 4px; color: var(--blue-dark); }
+  .trainer-card-spec { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .trainer-card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--yellow); }
+  .trainer-card-hire { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+  .del-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 14px; transition: color .15s; }
+  .del-btn:hover { color: #C62828; }
+
+  /* ── TOAST ── */
+  .toast-container { position: fixed; top: calc(var(--topbar-h) + 16px); right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+  .toast {
+    padding: 12px 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 1px;
+    border-left: 4px solid;
+    background: var(--white);
+    border-top: 1px solid var(--yellow);
+    border-right: 1px solid var(--yellow);
+    border-bottom: 1px solid var(--yellow);
+    min-width: 280px;
+    animation: slideIn .25s ease;
+    border-radius: 2px;
+    box-shadow: 0 4px 16px rgba(255,214,0,.2);
+  }
+  .toast.success { border-left-color: var(--yellow-dark); color: var(--yellow-dark); }
+  .toast.error   { border-left-color: #C62828; color: #C62828; }
+  @keyframes slideIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: translateX(0); } }
+
+  /* ── FILTER ROW ── */
+  .filter-row { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-row .form-group { flex: 1; min-width: 140px; }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-family: var(--mono); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+
+  /* ── HERO BANNER ── */
+  .hero-banner {
+    position: relative;
+    height: 210px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 28px;
+    background: var(--blue-dark);
+    border: 2px solid var(--yellow);
+    box-shadow: 0 4px 20px rgba(30,58,138,.3);
+  }
+  .hero-banner img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0.45;
+    display: block;
+  }
+  .hero-banner-content {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    justify-content: center;
+    padding: 0 40px;
+  }
+  .hero-title {
+    font-family: var(--display);
+    font-size: 58px;
+    letter-spacing: 6px;
+    color: var(--yellow);
+    line-height: 1;
+    text-shadow: 0 2px 12px rgba(0,0,0,.5);
+  }
+  .hero-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,.75);
+    text-transform: uppercase;
+    margin-top: 10px;
+  }
+
+  /* ── GYM GALLERY ── */
+  .gym-gallery {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .gym-gallery-item {
+    height: 110px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 2px solid var(--yellow);
+    position: relative;
+    cursor: pointer;
+  }
+  .gym-gallery-item img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform .35s ease;
+    display: block;
+  }
+  .gym-gallery-item:hover img { transform: scale(1.08); }
+  .gym-gallery-label {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(15,39,68,.85));
+    color: var(--yellow);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    padding: 8px 10px 6px;
+    text-transform: uppercase;
+  }
+
+  /* ── TRAINER AVATAR ── */
+  .trainer-avatar {
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue-mid) 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--display);
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: var(--yellow);
+    margin-bottom: 10px;
+    border: 2px solid var(--yellow);
+    flex-shrink: 0;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--yellow-light); }
+  ::-webkit-scrollbar-thumb { background: var(--yellow); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--yellow-dark); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    :root { --sidebar-w: 60px; }
+    .nav-label, .nav-item span { display: none; }
+    .main { padding: 20px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .form-grid, .form-grid-3, .section-grid { grid-template-columns: 1fr; }
+    .topbar-logo .gym-sub { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR WITH NAV & STATS -->
+<header class="topbar">
+  <div class="topbar-header">
+    <div class="topbar-logo">
+      <div class="gym-title">GYMPRO</div>
+      <div class="gym-sub">Management System</div>
+    </div>
+    <nav class="topbar-nav">
+      <div class="topbar-nav-item active" onclick="showPage('dashboard')">📊 Dashboard</div>
+      <div class="topbar-nav-item" onclick="showPage('trainers')">👤 Trainers</div>
+      <div class="topbar-nav-item" onclick="showPage('assign')">📅 Assignments</div>
+      <div class="topbar-nav-item" onclick="showPage('hours')">⏱ Hours</div>
+      <div class="topbar-nav-item" onclick="showPage('reports')">📈 Reports</div>
+    </nav>
+    <div class="topbar-status">
+      <span class="status-dot"></span>LIVE
+    </div>
+  </div>
+  
+  <div class="topbar-stats" id="topbar-stats">
+    <div class="stat-mini" onclick="showPage('trainers')" title="Click to view trainers">
+      <span class="stat-mini-label">👤 Active</span>
+      <span class="stat-mini-val" id="top-trainers">—</span>
+    </div>
+    <div class="stat-mini" onclick="showPage('assign')" title="Click to view assignments">
+      <span class="stat-mini-label">📅 Assigned</span>
+      <span class="stat-mini-val" id="top-assign">—</span>
+    </div>
+    <div class="stat-mini" onclick="showPage('hours')" title="Click to view hours">
+      <span class="stat-mini-label">⏱ Total Hours</span>
+      <span class="stat-mini-val" id="top-hours">—</span>
+    </div>
+    <div class="stat-mini" onclick="showPage('assign')" title="Click to view classes">
+      <span class="stat-mini-label">🎯 Classes</span>
+      <span class="stat-mini-val" id="top-classes">—</span>
+    </div>
+  </div>
+</header>
+
+<!-- SIDEBAR (hidden) -->
+<nav class="sidebar">
+  <div class="nav-section">
+    <div class="nav-label">Navigation</div>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <span class="nav-icon">⬛</span><span>Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="showPage('trainers')">
+      <span class="nav-icon">👤</span><span>Trainers</span>
+    </div>
+    <div class="nav-item" onclick="showPage('assign')">
+      <span class="nav-icon">📅</span><span>Assignments</span>
+    </div>
+    <div class="nav-item" onclick="showPage('hours')">
+      <span class="nav-icon">⏱</span><span>Hours Log</span>
+    </div>
+    <div class="nav-item" onclick="showPage('reports')">
+      <span class="nav-icon">📊</span><span>Reports</span>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- ── DASHBOARD ── -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div>
+        <div class="page-title">DASH<span>BOARD</span></div>
+        <div class="page-sub">// OVERVIEW & RECENT ACTIVITY</div>
+      </div>
+      <div class="scrum-badge">SPRINT 1 — TRAINER TRACKING</div>
+    </div>
+    <div class="hero-banner">
+      <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1400&q=80&auto=format" alt="Gym floor" loading="lazy">
+      <div class="hero-banner-content">
+        <div class="hero-title">GYMPRO</div>
+        <div class="hero-sub">// Trainer Management System — Live Sprint Dashboard</div>
+      </div>
+    </div>
+
+    <div class="gym-gallery">
+      <div class="gym-gallery-item">
+        <img src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400&q=75&auto=format" alt="Weights" loading="lazy">
+        <div class="gym-gallery-label">Strength</div>
+      </div>
+      <div class="gym-gallery-item">
+        <img src="https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=400&q=75&auto=format" alt="Cardio" loading="lazy">
+        <div class="gym-gallery-label">Cardio</div>
+      </div>
+      <div class="gym-gallery-item">
+        <img src="https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=400&q=75&auto=format" alt="Boxing" loading="lazy">
+        <div class="gym-gallery-label">Combat</div>
+      </div>
+      <div class="gym-gallery-item">
+        <img src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400&q=75&auto=format" alt="Studio" loading="lazy">
+        <div class="gym-gallery-label">Studio</div>
+      </div>
+    </div>
+
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card yellow"><div class="stat-label">Active Trainers</div><div class="stat-val" id="s-trainers">—</div><div class="stat-note">SCRUM-3</div></div>
+      <div class="stat-card blue"><div class="stat-label">Classes</div><div class="stat-val" id="s-classes">—</div><div class="stat-note">available types</div></div>
+      <div class="stat-card yellow2"><div class="stat-label">Assignments</div><div class="stat-val" id="s-assign">—</div><div class="stat-note">SCRUM-16</div></div>
+      <div class="stat-card blue2"><div class="stat-label">Total Hours</div><div class="stat-val" id="s-hours">—</div><div class="stat-note">SCRUM-17 auto</div></div>
+    </div>
+    <div class="table-wrap">
+      <div class="table-header">
+        <span class="table-title">Recent Assignments</span>
+        <button class="btn btn-muted" onclick="showPage('assign')">+ New Assignment</button>
+      </div>
+      <table>
+        <thead><tr><th>Trainer</th><th>Class</th><th>Date</th><th>Time</th><th>Status</th></tr></thead>
+        <tbody id="dash-table"><tr><td colspan="5" class="empty"><div class="empty-icon">⬛</div><div class="empty-text">Loading…</div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── TRAINERS ── -->
+  <div class="page" id="page-trainers">
+    <div class="page-header">
+      <div>
+        <div class="page-title">TRAI<span>NERS</span></div>
+        <div class="page-sub">// SCRUM-3 — CREATE & MANAGE TRAINER PROFILES</div>
+      </div>
+      <button class="btn btn-green" onclick="toggleForm('trainer-form')">+ ADD TRAINER</button>
+    </div>
+
+    <div class="panel" id="trainer-form" style="display:none">
+      <div class="panel-title">// New Trainer Profile</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Full Name *</label><input id="t-name" placeholder="e.g. Alex Johnson"></div>
+        <div class="form-group"><label>Email *</label><input id="t-email" type="email" placeholder="alex@gympro.com"></div>
+        <div class="form-group"><label>Phone</label><input id="t-phone" placeholder="07700 900000"></div>
+        <div class="form-group"><label>Hire Date</label><input id="t-hire" type="date"></div>
+        <div class="form-group full"><label>Specializations</label><input id="t-spec" placeholder="e.g. Yoga, Pilates, Mindfulness"></div>
+      </div>
+      <div style="margin-top:20px; display:flex; gap:10px;">
+        <button class="btn btn-green" onclick="createTrainer()">✓ CREATE PROFILE</button>
+        <button class="btn btn-muted" onclick="toggleForm('trainer-form')">CANCEL</button>
+      </div>
+    </div>
+
+    <div class="trainer-grid" id="trainer-grid">
+      <div class="empty"><div class="empty-icon">👤</div><div class="empty-text">Loading trainers…</div></div>
+    </div>
+  </div>
+
+  <!-- ── ASSIGN ── -->
+  <div class="page" id="page-assign">
+    <div class="page-header">
+      <div>
+        <div class="page-title">ASSIGN<span>MENTS</span></div>
+        <div class="page-sub">// SCRUM-16 — ASSIGN TRAINERS TO CLASSES</div>
+      </div>
+      <div class="scrum-badge">AUTO-HOURS: ON</div>
+    </div>
+
+    <div class="section-grid">
+      <div class="panel">
+        <div class="panel-title">// New Assignment</div>
+        <div class="form-grid" style="grid-template-columns:1fr;">
+          <div class="form-group"><label>Trainer *</label>
+            <select id="a-trainer"><option value="">Select Trainer…</option></select>
+          </div>
+          <div class="form-group"><label>Class *</label>
+            <select id="a-class"><option value="">Select Class…</option></select>
+          </div>
+          <div class="form-group"><label>Date *</label><input id="a-date" type="date"></div>
+          <div class="form-grid" style="grid-template-columns:1fr 1fr; margin:0;">
+            <div class="form-group"><label>Start Time</label><input id="a-start" type="time" value="09:00"></div>
+            <div class="form-group"><label>End Time</label><input id="a-end" type="time" value="10:00"></div>
+          </div>
+        </div>
+        <div style="margin-top:20px;">
+          <button class="btn btn-green" onclick="createAssignment()">✓ ASSIGN TRAINER</button>
+        </div>
+        <div style="margin-top:12px; padding:10px; background:var(--yellow-bg); border:1px solid var(--yellow-border);">
+          <span style="font-family:var(--mono); font-size:10px; color:var(--yellow-dark); letter-spacing:1px;">
+            ⚡ SCRUM-17: Working hours auto-recorded on assignment
+          </span>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="border:1px solid var(--border);">
+        <div class="table-header"><span class="table-title">Recent Assignments</span></div>
+        <div style="overflow-y:auto; max-height:420px;">
+          <table>
+            <thead><tr><th>Trainer</th><th>Class</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody id="assign-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── HOURS ── -->
+  <div class="page" id="page-hours">
+    <div class="page-header">
+      <div>
+        <div class="page-title">HOURS<span> LOG</span></div>
+        <div class="page-sub">// SCRUM-17 — AUTO & MANUAL HOUR RECORDING</div>
+      </div>
+      <button class="btn btn-orange" onclick="toggleForm('manual-hours-form')">+ MANUAL ENTRY</button>
+    </div>
+
+    <div class="panel" id="manual-hours-form" style="display:none">
+      <div class="panel-title">// Manual Hours Entry</div>
+      <div class="form-grid-3">
+        <div class="form-group"><label>Trainer *</label><select id="h-trainer"><option value="">Select…</option></select></div>
+        <div class="form-group"><label>Date *</label><input id="h-date" type="date"></div>
+        <div class="form-group"><label>Hours Worked *</label><input id="h-hours" type="number" step="0.5" min="0.5" max="24" placeholder="e.g. 2.5"></div>
+        <div class="form-group full"><label>Description</label><input id="h-desc" placeholder="e.g. Extra coaching session"></div>
+      </div>
+      <div style="margin-top:20px; display:flex; gap:10px;">
+        <button class="btn btn-orange" onclick="recordHours()">✓ RECORD HOURS</button>
+        <button class="btn btn-muted" onclick="toggleForm('manual-hours-form')">CANCEL</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header">
+        <span class="table-title">Hours Log</span>
+        <span style="font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:1px;">AUTO = system recorded · MANUAL = staff entry</span>
+      </div>
+      <table>
+        <thead><tr><th>Trainer</th><th>Date</th><th>Hours</th><th>Class</th><th>Description</th><th>Type</th></tr></thead>
+        <tbody id="hours-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── REPORTS ── -->
+  <div class="page" id="page-reports">
+    <div class="page-header">
+      <div>
+        <div class="page-title">RE<span>PORTS</span></div>
+        <div class="page-sub">// SCRUM-18 — VIEW & EXPORT TRAINER HOURS</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">// Report Filters</div>
+      <div class="filter-row">
+        <div class="form-group"><label>Trainer</label>
+          <select id="r-trainer"><option value="">All Trainers</option></select>
+        </div>
+        <div class="form-group"><label>Start Date</label><input id="r-start" type="date"></div>
+        <div class="form-group"><label>End Date</label><input id="r-end" type="date"></div>
+        <button class="btn btn-blue" onclick="generateReport()">▶ GENERATE</button>
+        <button class="btn btn-green" onclick="exportReport('xlsx')">↓ EXCEL</button>
+        <button class="btn btn-muted" onclick="exportReport('csv')">↓ CSV</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header"><span class="table-title">Report Results</span><span id="report-count" style="font-family:var(--mono);font-size:11px;color:var(--muted);"></span></div>
+      <table>
+        <thead><tr><th>Trainer</th><th>Specializations</th><th>Total Hours</th><th>Classes Taught</th><th>Avg Hrs/Session</th><th>Performance</th></tr></thead>
+        <tbody id="report-table">
+          <tr><td colspan="6"><div class="empty"><div class="empty-icon">📊</div><div class="empty-text">Set filters and click Generate</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+const API = '';
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function getInitials(name) {
+  return name.split(' ').filter(Boolean).map(n => n[0].toUpperCase()).slice(0, 2).join('');
+}
+
+// ── ANIMATED COUNTER ──────────────────────────────────────────────────────────
+function animateCounter(elem, target) {
+  if (!elem) return;
+  const current = parseInt(elem.textContent) || 0;
+  if (current === target) return;
+  const diff = target - current;
+  const steps = 30;
+  let step = 0;
+  const interval = setInterval(() => {
+    step++;
+    const val = Math.round(current + (diff * (step / steps)));
+    elem.textContent = val;
+    if (step >= steps) {
+      elem.textContent = target;
+      clearInterval(interval);
+    }
+  }, 20);
+}
+
+// ── NAV ──────────────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.topbar-nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.topbar-nav-item').forEach(n => {
+    if (n.textContent.toLowerCase().includes(name === 'dashboard' ? 'dash' : name === 'assign' ? 'assign' : name === 'hours' ? 'hour' : name === 'trainers' ? 'trainer' : 'report'))
+      n.classList.add('active');
+  });
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'trainers')  loadTrainers();
+  if (name === 'assign')    loadAssignPage();
+  if (name === 'hours')     loadHours();
+  if (name === 'reports')   loadReportPage();
+}
+
+function toggleForm(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = (type === 'success' ? '✓ ' : '✗ ') + msg;
+  c.appendChild(t);
+  t.style.animation = 'slideIn .25s ease';
+  setTimeout(() => t.remove(), 4000);
+}
+
+// ── API HELPERS ───────────────────────────────────────────────────────────────
+async function api(url, opts = {}) {
+  try {
+    const res = await fetch(API + url, opts);
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error('API error:', url, err);
+    return { success: false, error: 'Network error — is the server running?' };
+  }
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  const d = await api('/api/dashboard');
+  
+  // Animate stat cards
+  animateCounter(document.getElementById('s-trainers'), d.trainers);
+  animateCounter(document.getElementById('s-classes'), d.classes);
+  animateCounter(document.getElementById('s-assign'), d.assignments);
+  animateCounter(document.getElementById('s-hours'), Math.round(d.total_hours));
+  
+  // Update top bar stats
+  animateCounter(document.getElementById('top-trainers'), d.trainers);
+  animateCounter(document.getElementById('top-classes'), d.classes);
+  animateCounter(document.getElementById('top-assign'), d.assignments);
+  animateCounter(document.getElementById('top-hours'), Math.round(d.total_hours));
+
+  const tbody = document.getElementById('dash-table');
+  if (!d.recent.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="empty-icon">📅</div><div class="empty-text">No assignments yet</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = d.recent.map(r => `
+    <tr style="animation: fadeIn .3s ease;">
+      <td><strong>${r.name}</strong></td>
+      <td>${r.cls}</td>
+      <td style="font-family:var(--mono);font-size:12px;">${r.assigned_date}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--muted);">${r.start_time} – ${r.end_time}</td>
+      <td><span class="badge badge-${r.status==='scheduled'?'blue':'green'}">${r.status}</span></td>
+    </tr>`).join('');
+}
+
+// ── TRAINERS ─────────────────────────────────────────────────────────────────
+async function loadTrainers() {
+  const trainers = await api('/api/trainers');
+  const grid = document.getElementById('trainer-grid');
+  if (!trainers.length) {
+    grid.innerHTML = `<div class="empty"><div class="empty-icon">👤</div><div class="empty-text">No trainers found</div></div>`;
+    return;
+  }
+  grid.innerHTML = trainers.map((t, i) => `
+    <div class="trainer-card" style="animation: fadeIn .4s ease ${i * 30}ms;">
+      <div class="trainer-avatar">${getInitials(t.name)}</div>
+      <div class="trainer-card-id">ID #${String(t.id).padStart(3,'0')} · <span class="badge badge-green">ACTIVE</span></div>
+      <div class="trainer-card-name">${t.name.toUpperCase()}</div>
+      <div class="trainer-card-spec">${t.specializations || '—'}</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:8px;">📧 ${t.email}</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:8px;">📞 ${t.phone || '—'}</div>
+      <div class="trainer-card-footer">
+        <span class="trainer-card-hire">Hired: ${t.hire_date || '—'}</span>
+        <button class="del-btn" onclick="deleteTrainer(${t.id}, '${t.name}')" title="Delete">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+async function createTrainer() {
+  const name  = document.getElementById('t-name').value.trim();
+  const email = document.getElementById('t-email').value.trim();
+  const phone = document.getElementById('t-phone').value.trim();
+  const hire  = document.getElementById('t-hire').value;
+  const spec  = document.getElementById('t-spec').value.trim();
+  if (!name || !email) { toast('Name and email are required', 'error'); return; }
+  const res = await api('/api/trainers', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ name, email, phone, specializations: spec, hire_date: hire })
+  });
+  if (res.success) {
+    toast('Trainer profile created');
+    document.getElementById('t-name').value = '';
+    document.getElementById('t-email').value = '';
+    document.getElementById('t-phone').value = '';
+    document.getElementById('t-spec').value = '';
+    document.getElementById('t-hire').value = '';
+    toggleForm('trainer-form');
+    loadTrainers();
+    loadDashboard();
+  } else { toast(res.error || 'Failed to create trainer', 'error'); }
+}
+
+async function deleteTrainer(id, name) {
+  if (!confirm(`Delete ${name}?`)) return;
+  await api(`/api/trainers/${id}`, { method: 'DELETE' });
+  toast(`${name} removed`);
+  loadTrainers();
+  loadDashboard();
+}
+
+// ── ASSIGN PAGE ───────────────────────────────────────────────────────────────
+async function loadAssignPage() {
+  const [trainers, classes, assignments] = await Promise.all([
+    api('/api/trainers'), api('/api/classes'), api('/api/assignments')
+  ]);
+  const tSel = document.getElementById('a-trainer');
+  tSel.innerHTML = '<option value="">Select Trainer…</option>' +
+    trainers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  const cSel = document.getElementById('a-class');
+  cSel.innerHTML = '<option value="">Select Class…</option>' +
+    classes.map(c => `<option value="${c.id}">${c.name} (${c.duration}min)</option>`).join('');
+  document.getElementById('a-date').value = new Date().toISOString().split('T')[0];
+
+  const tbody = document.getElementById('assign-table');
+  tbody.innerHTML = assignments.map((a, i) => `
+    <tr style="animation: fadeIn .3s ease ${i * 20}ms;">
+      <td>${a.trainer}</td>
+      <td>${a.class_name}</td>
+      <td style="font-family:var(--mono);font-size:11px;">${a.assigned_date}</td>
+      <td><span class="badge badge-blue">${a.status}</span></td>
+    </tr>`).join('') || `<tr><td colspan="4"><div class="empty"><div class="empty-text">No assignments</div></div></td></tr>`;
+}
+
+async function createAssignment() {
+  const trainer_id = document.getElementById('a-trainer').value;
+  const class_id   = document.getElementById('a-class').value;
+  const date       = document.getElementById('a-date').value;
+  const start_time = document.getElementById('a-start').value;
+  const end_time   = document.getElementById('a-end').value;
+  if (!trainer_id) { toast('Please select a trainer', 'error'); return; }
+  if (!class_id)   { toast('Please select a class', 'error'); return; }
+  if (!date)       { toast('Please select a date', 'error'); return; }
+  if (!start_time || !end_time) { toast('Start and end times are required', 'error'); return; }
+  if (start_time >= end_time) { toast('End time must be after start time', 'error'); return; }
+  const btn = document.querySelector('#page-assign .btn-green');
+  if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
+  const res = await api('/api/assignments', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ trainer_id, class_id, date, start_time, end_time })
+  });
+  if (btn) { btn.textContent = '✓ ASSIGN TRAINER'; btn.disabled = false; }
+  if (res.success) {
+    toast('Trainer assigned + hours auto-recorded ⚡');
+    loadAssignPage();
+    loadDashboard();
+  } else {
+    toast(res.error || 'Assignment failed', 'error');
+  }
+}
+
+// ── HOURS ─────────────────────────────────────────────────────────────────────
+async function loadHours() {
+  const [hours, trainers] = await Promise.all([api('/api/hours'), api('/api/trainers')]);
+
+  const hSel = document.getElementById('h-trainer');
+  hSel.innerHTML = '<option value="">Select…</option>' +
+    trainers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  document.getElementById('h-date').value = new Date().toISOString().split('T')[0];
+
+  const tbody = document.getElementById('hours-table');
+  if (!hours.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">⏱</div><div class="empty-text">No hours recorded yet</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = hours.map((h, i) => {
+    const isAuto = h.description === 'Auto-recorded for class assignment';
+    return `<tr style="animation: fadeIn .3s ease ${i * 20}ms;">
+      <td><strong>${h.trainer}</strong></td>
+      <td style="font-family:var(--mono);font-size:11px;">${h.date}</td>
+      <td><span style="font-family:var(--display);font-size:22px;color:var(--${isAuto?'yellow-dark':'blue-mid'})">${h.hours_worked}</span> <span style="font-size:11px;color:var(--muted);">hrs</span></td>
+      <td>${h.class_name || '—'}</td>
+      <td style="font-size:12px;color:var(--muted);">${h.description || '—'}</td>
+      <td><span class="badge badge-${isAuto?'green':'orange'}">${isAuto?'AUTO':'MANUAL'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+async function recordHours() {
+  const trainer_id = document.getElementById('h-trainer').value;
+  const date       = document.getElementById('h-date').value;
+  const hours      = document.getElementById('h-hours').value;
+  const desc       = document.getElementById('h-desc').value;
+  if (!trainer_id || !date || !hours) { toast('Trainer, date and hours are required', 'error'); return; }
+  const res = await api('/api/hours/manual', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ trainer_id, date, hours: parseFloat(hours), description: desc })
+  });
+  if (res.success) {
+    toast('Hours recorded manually');
+    toggleForm('manual-hours-form');
+    loadHours();
+    loadDashboard();
+  } else { toast('Failed to record hours', 'error'); }
+}
+
+// ── REPORTS ───────────────────────────────────────────────────────────────────
+async function loadReportPage() {
+  const trainers = await api('/api/trainers');
+  const rSel = document.getElementById('r-trainer');
+  rSel.innerHTML = '<option value="">All Trainers</option>' +
+    trainers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  const now = new Date();
+  document.getElementById('r-end').value = now.toISOString().split('T')[0];
+  const start = new Date(now); start.setDate(start.getDate() - 30);
+  document.getElementById('r-start').value = start.toISOString().split('T')[0];
+}
+
+async function generateReport() {
+  const trainer_id = document.getElementById('r-trainer').value;
+  const start = document.getElementById('r-start').value;
+  const end   = document.getElementById('r-end').value;
+  let url = `/api/report?start_date=${start}&end_date=${end}`;
+  if (trainer_id) url += `&trainer_id=${trainer_id}`;
+  const rows = await api(url);
+  const tbody = document.getElementById('report-table');
+  document.getElementById('report-count').textContent = rows.length + ' results';
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-text">No data for selected period</div></div></td></tr>`;
+    return;
+  }
+  const maxH = Math.max(...rows.map(r => r.total_hours));
+  tbody.innerHTML = rows.map((r, i) => {
+    const pct = maxH ? Math.round((r.total_hours / maxH) * 100) : 0;
+    const color = pct > 66 ? 'yellow-dark' : pct > 33 ? 'blue-mid' : 'blue';
+    return `<tr style="animation: fadeIn .3s ease ${i * 20}ms;">
+      <td><strong>${r.name}</strong></td>
+      <td style="font-size:12px;color:var(--muted);">${r.specializations || '—'}</td>
+      <td><span style="font-family:var(--display);font-size:26px;color:var(--${color})">${r.total_hours}</span></td>
+      <td style="text-align:center;"><span class="badge badge-blue">${r.classes_taught}</span></td>
+      <td style="font-family:var(--mono);font-size:12px;">${r.avg_hours || '—'} hrs</td>
+      <td>
+        <div style="background:var(--border);height:6px;width:120px;border-radius:3px;">
+          <div style="background:var(--${color});height:6px;width:${pct}%;transition:width .4s ease;border-radius:3px;"></div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function exportReport(fmt) {
+  const trainer_id = document.getElementById('r-trainer').value;
+  const start = document.getElementById('r-start').value;
+  const end   = document.getElementById('r-end').value;
+  let url = `/api/report/export?format=${fmt}&start_date=${start}&end_date=${end}`;
+  if (trainer_id) url += `&trainer_id=${trainer_id}`;
+  window.location.href = url;
+  toast(`Exporting ${fmt.toUpperCase()} report…`);
+}
+
+// ── AUTO-REFRESH DASHBOARD ────────────────────────────────────────────────────
+setInterval(() => {
+  if (document.getElementById('page-dashboard').classList.contains('active')) {
+    loadDashboard();
+  }
+}, 5000);
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadDashboard();
+</script>
+
+</body>
+</html>
